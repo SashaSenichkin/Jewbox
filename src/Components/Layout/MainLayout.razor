@@ -1,0 +1,32 @@
+﻿@inherits LayoutComponentBase
+@inject IJSRuntime JsRuntime
+
+<div class="page">
+    <div class="sidebar">
+        <NavMenu/>
+    </div>
+
+    <main>
+        <div class="top-row px-4">
+            <a href="mailto:korusant.jedi@gmail.com" target="_blank">Написать разработчику</a>
+        </div>
+
+        <article class="content px-4">
+            @Body
+        </article>
+    </main>
+</div>
+
+<div id="blazor-error-ui" data-nosnippet>
+    An unhandled error has occurred.
+    <a href="." class="reload">Reload</a>
+    <span class="dismiss">🗙</span>
+</div>
+
+@code {
+
+    private void MessageShow()
+    {
+        JsRuntime.InvokeVoidAsync("alert", "по вопросам и предложениям пишите по адресу korusant.jedi@gmail.com").GetAwaiter().GetResult(); // Alert
+    }
+}
