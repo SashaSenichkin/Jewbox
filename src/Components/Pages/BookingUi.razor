@@ -1,0 +1,163 @@
+@page "/booking"
+@rendermode InteractiveServer
+
+@using Jewbox.Models
+@using Jewbox.Repositories
+@using Jewbox.Services
+
+@inject IUserRepository Users
+@inject IBookingService BookingService
+@inject ISender Sender
+
+<PageTitle>Booking</PageTitle>
+
+<div class="mb-3">
+    <label class="form-label">Когда бронируем</label>
+    <label class="form-label">понедельник с 12:30 до 16:00, вторник с 14:00 до 16:00, среда с 8:00 до 12:00. </label>
+    
+    <InputDate class="form-control" @bind-Value="SelectedDate" />
+    <input class="form-control mt-2" type="time" @bind="SelectedTime" />
+
+    @if (ShowDateWarning)
+    {
+        <div class="alert alert-warning mt-2 mb-0">
+            Вы выбрали некорректный день недели — проверьте доступные временные окна перед бронированием.
+        </div>
+    }
+    
+    <label class="form-label">На кого бронируем</label>
+    <select class="form-select" @bind="SelectedUserId">
+        @foreach (var u in AllUsers)
+        {
+            <option value="@u.Id">@u.Name (@u.NameCode)</option>
+        }
+    </select>
+
+    @if (SelectedUser is not null)
+    {
+        <div class="card mt-2">
+            <div class="card-body py-2">
+                <div><b>Организация:</b> @SelectedUser.OrgName</div>
+                <div><b>Спецучет:</b> @SelectedUser.OrgCode</div>
+                <div><b>Именник:</b> @SelectedUser.NameCode</div>
+                <div><b>ФИО:</b> @SelectedUser.Name</div>
+                <div><b>Email:</b> @SelectedUser.Email</div>
+                <div><b>Телефон:</b> @SelectedUser.Phone</div>
+            </div>
+        </div>
+    }
+</div>
+
+<div class="d-flex gap-2">
+    <button class="btn btn-primary" @onclick="CreateBooking" disabled="@IsBusy">Забронировать срочный</button>
+    <button class="btn btn-primary" @onclick="SendBooking" disabled="@(!CanSend || IsBusy)">Забронировать несрочный, до 100</button>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(Status))
+{
+    <div class="alert alert-info mt-3 mb-0">@Status</div>
+}
+
+@if (LastBooking is not null)
+{
+    <div class="card mt-3">
+        <div class="card-body">
+            <div><b>User:</b> @LastBooking.Person.Name</div>
+            <div><b>Org:</b> @LastBooking.Person.OrgName</div>
+            <div><b>Start:</b> @LastBooking.DesiredDate</div>
+            <div><b>End:</b> @LastBooking.EndDate</div>
+            <div><b>Type:</b> @LastBooking.Type</div>
+        </div>
+    </div>
+}
+
+@code {
+    private IReadOnlyList<User> AllUsers { get; set; } = Array.Empty<User>();
+    private DateTime? SelectedDateTime { get; set; } = DateTime.Today.AddHours(9);
+    private int SelectedUserId { get; set; }
+    private Booking? LastBooking { get; set; }
+    private string? Status { get; set; }
+    private bool IsBusy { get; set; }
+
+    private bool CanSend => SelectedDateTime is not null && AllUsers.Count > 0;
+    private bool ShowDateWarning => !BookingService.IsCorrectDate(SelectedDateTime);
+    private User? SelectedUser => AllUsers.FirstOrDefault(u => u.Id == SelectedUserId);
+
+    private DateTime? SelectedDate
+    {
+        get => SelectedDateTime?.Date;
+        set
+        {
+            var time = SelectedDateTime?.TimeOfDay ?? new TimeSpan(9, 0, 0);
+            SelectedDateTime = (value ?? DateTime.Today).Date.Add(time);
+        }
+    }
+
+    private TimeOnly? SelectedTime
+    {
+        get => SelectedDateTime is null ? null : TimeOnly.FromDateTime(SelectedDateTime.Value);
+        set
+        {
+            var date = SelectedDateTime?.Date ?? DateTime.Today;
+            SelectedDateTime = date.Add((value ?? new TimeOnly(9, 0)).ToTimeSpan());
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        AllUsers = Users.GetUsers();
+        SelectedUserId = AllUsers.FirstOrDefault()?.Id ?? 0;
+    }
+
+    private void CreateBooking()
+    {
+        Status = null;
+        if (SelectedDateTime is null)
+        {
+            LastBooking = null;
+            Status = "Select a date.";
+            return;
+        }
+
+        var start = SelectedDateTime.Value;
+        LastBooking = BookingService.GetBooking(SelectedUserId, BookingType.proizvoditeli_sro4no, start);
+        Status = "Booking created (preview below).";
+    }
+
+    private async Task SendBooking()
+    {
+        Status = null;
+        if (SelectedDateTime is null)
+        {
+            Status = "Select a date.";
+            return;
+        }
+
+        IsBusy = true;
+        try
+        {
+            if (LastBooking is null)
+            {
+                CreateBooking();
+            }
+
+            if (LastBooking is null)
+            {
+                Status = "Booking was not created.";
+                return;
+            }
+
+            var isError = await Sender.SendRequest(LastBooking);
+            Status = isError ? "Server returned error status." : "Request sent successfully.";
+        }
+        catch (Exception ex)
+        {
+            Status = ex.Message;
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+}
+

@@ -13,7 +13,8 @@ public class UserRepository : IUserRepository
             OrgCode = "ИП710100351300000",
             NameCode = "ЦМЛИ",
             Name = "Литвинов Александр Геннадиевич",
-            Email = "info@obruchalka71.ru",
+            Email = "korusant.jedi@gmail.com",
+            //Email = "info@obruchalka71.ru",
             Phone = "89056248476",
         }, 
         new ()
@@ -23,10 +24,16 @@ public class UserRepository : IUserRepository
             OrgCode = "ЮЛ7101036266",
             NameCode = "Цмук",
             Name = "Литвинов Алексей Геннадьевич",
-            Email = "lag1503811@mail.ru",
+            Email = "korusant.jedi@gmail.com",
+            //Email = "lag1503811@mail.ru",
             Phone = "89056209756",
         },
     ];
+
+    public IReadOnlyList<User> GetUsers()
+    {
+        return _userStorage;
+    }
 
     public User GetUserById(int id)
     {

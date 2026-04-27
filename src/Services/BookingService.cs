@@ -13,28 +13,56 @@ public class BookingService : IBookingService
         _userRepository = userRepository;
     }
 
+    public bool IsCorrectDate(DateTime? date)
+    {
+        if (date == null)
+        {
+            return false;
+        }
+
+        try
+        {
+            Validate(date.Value);
+        }
+        catch (Exception)
+        {
+            return false;
+        }
+        
+        return true;
+    }
+
     private static void Validate(DateTime date)
     {
+        if (date.Minute % 15 != 0)
+        {
+            throw new ArgumentException("Minute have to be multiple of 15");
+        }
+
+        TimeSpan start, end;
         switch (date.DayOfWeek)
         {
             case DayOfWeek.Monday:
-            {
-                //startDate = startDate.AddHours(12);
-                //startDate = startDate.AddMinutes(30);
+                start = new TimeSpan(12, 30, 0);
+                end = new TimeSpan(16, 0, 0);
                 break;
-            }
             case DayOfWeek.Tuesday:
-            {
-                //startDate = startDate.AddHours(14);
+                start = new TimeSpan(14, 0, 0);
+                end = new TimeSpan(16, 0, 0);
                 break;
-            }
             case DayOfWeek.Wednesday:
-            {
-                //startDate = startDate.AddHours(8);
+                start = new TimeSpan(8, 0, 0);
+                end = new TimeSpan(12, 0, 0);
                 break;
-            }
             default:
-                throw new ArgumentOutOfRangeException("incorrect date set");
+                throw new ArgumentOutOfRangeException(nameof(date), "Некорректный день недели (разрешены Пн/Вт/Ср).");
+        }
+
+        if (date.TimeOfDay < start || date.TimeOfDay >= end)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(date),
+                $"Некорректное время. Для {date.DayOfWeek} доступно {start:hh\\:mm}–{end:hh\\:mm} (слот {WindowRangeMin} мин).");
         }
     }
 
