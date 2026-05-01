@@ -4,10 +4,12 @@
 @using Jewbox.Models
 @using Jewbox.Repositories
 @using Jewbox.Services
+@using Microsoft.JSInterop
 
 @inject IUserRepository Users
 @inject IBookingService BookingService
 @inject ISender Sender
+@inject IJSRuntime JS
 
 <PageTitle>Booking</PageTitle>
 
@@ -49,7 +51,7 @@
 </div>
 
 <div class="d-flex gap-2">
-    <button class="btn btn-primary" @onclick="CreateBooking" disabled="@IsBusy">Забронировать срочный</button>
+    <button class="btn btn-primary" @onclick="ConfirmCreateBooking" disabled="@IsBusy">Забронировать срочный</button>
     <button class="btn btn-primary" @onclick="SendBooking" disabled="@(!CanSend || IsBusy)">Забронировать несрочный, до 100</button>
 </div>
 
@@ -122,6 +124,24 @@
         var start = SelectedDateTime.Value;
         LastBooking = BookingService.GetBooking(SelectedUserId, BookingType.proizvoditeli_sro4no, start);
         Status = "Booking created (preview below).";
+    }
+
+    private async Task ConfirmCreateBooking()
+    {
+        if (IsBusy)
+        {
+            return;
+        }
+
+        var who = SelectedUser is null ? "не выбран пользователь" : $"{SelectedUser.Name} ({SelectedUser.NameCode})";
+        var when = SelectedDateTime is null ? "не выбрана дата/время" : SelectedDateTime.Value.ToString("dd.MM.yyyy HH:mm");
+        var ok = await JS.InvokeAsync<bool>("confirm", $"Создать срочную бронь?\n\nКто: {who}\nКогда: {when}");
+        if (!ok)
+        {
+            return;
+        }
+
+        CreateBooking();
     }
 
     private async Task SendBooking()
