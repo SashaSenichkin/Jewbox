@@ -63,10 +63,9 @@
 
 @code {
     private IReadOnlyList<User> AllUsers { get; set; } = Array.Empty<User>();
-    private DateTime? SelectedDateTime { get; set; } = DateTime.Today.AddHours(9);
+    private DateTime? SelectedDateTime { get; set; } = DateTime.Today.AddMonths(1).AddDays(1).AddHours(8);
     private int SelectedUserId { get; set; }
     private string? Status { get; set; }
-private TimeOnly _selectedTime = new TimeOnly(14, 30, 00); // 2:30 PM
 
     private bool ShowDateWarning => !BookingService.IsCorrectDate(SelectedDateTime);
     private User? SelectedUser => AllUsers.FirstOrDefault(u => u.Id == SelectedUserId);
@@ -126,26 +125,16 @@ private TimeOnly _selectedTime = new TimeOnly(14, 30, 00); // 2:30 PM
         try
         {
             var sentResult = SenderService.SendRequestAsync(booking).Result;
-            switch (sentResult)
+            Status = sentResult switch
             {
-                case SentStatus.UnknownError:
-                    Status = "Что-то пошло не так";
-                    break;
-                case SentStatus.Success:
-                    Status = "Забронировано, проверьте почту";
-                    break;
-                case SentStatus.Test:
-                    Status = "Тестовое бронирование завершено, отправки не было";
-                    break;
-                case SentStatus.WrongDate:
-                    Status = "Дата не проходит. возможно наложение праздника или смена расписания";
-                    break;
-                case SentStatus.DayBusy:
-                    Status = "Дата уже занята";
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
+                SentStatus.UnknownError => "Что-то пошло не так",
+                SentStatus.Success => "Забронировано, проверьте почту",
+                SentStatus.Test => "Тестовое бронирование завершено, отправки не было",
+                SentStatus.WrongDate => "Дата не проходит. возможно наложение праздника или смена расписания",
+                SentStatus.DayBusy => "Дата уже занята",
+                SentStatus.CantGetSecret => "Не удалось получить секрет",
+                _ => throw new ArgumentOutOfRangeException(),
+            };
         }
         catch (Exception e)
         {
@@ -166,8 +155,8 @@ private TimeOnly _selectedTime = new TimeOnly(14, 30, 00); // 2:30 PM
         
         var who = SelectedUser is null ? "не выбран пользователь" : $"{SelectedUser.Name} ({SelectedUser.NameCode})";
         var when = SelectedDateTime is null ? "не выбрана дата/время" : SelectedDateTime.Value.ToString("dd.MM.yyyy HH:mm");
-        var ok = await JS.InvokeAsync<bool>("confirm", $"Создать срочную бронь?\n\nКто: {who}\nКогда: {when}");
-        return ok;
+        //var ok = await JS.InvokeAsync<bool>("confirm", $"Создать срочную бронь?\n\nКто: {who}\nКогда: {when}");
+        return true;
     }
 }
 

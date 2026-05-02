@@ -31,8 +31,9 @@ jobs:
       run: touch release/wwwroot/.nojekyll      
       
     - name: Uploading files to gh-pages branch
-      uses: JamesIves/github-pages-deploy-action@v4
+      uses: JamesIves/github-pages-deploy-action@v4.6.1
       with:
         branch: gh-pages
+        ssh-key: ${{ secrets.DEPLOY_KEY }}
         folder: release/wwwroot
         

@@ -7,4 +7,5 @@ public enum SentStatus
     Test,
     WrongDate,
     DayBusy,
+    CantGetSecret,
 }

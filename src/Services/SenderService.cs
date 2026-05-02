@@ -5,8 +5,8 @@ namespace Jewbox.Services;
 
 public partial class SenderService : ISenderService
 {
-    private const string GetUrl = "https://probpalata.gov.ru/deyatelnost/kleymenie-i-markirovka/grafik-raboty-otdelov-po-klejmeniyu-i-markirovke/g-moskva-zapis-na-klejmenie-partij-po-srochnomu-tarifu-proizvoditeli/";
-    private const string PostUrl = "https://probpalata.gov.ru/wp-admin/admin-ajax.php";
+    private readonly Uri GetUrl = new ("https://probpalata.gov.ru/deyatelnost/kleymenie-i-markirovka/grafik-raboty-otdelov-po-klejmeniyu-i-markirovke/g-moskva-zapis-na-klejmenie-partij-po-srochnomu-tarifu-proizvoditeli");
+    private readonly Uri PostUrl = new ("https://probpalata.gov.ru/wp-admin/admin-ajax.php");
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<SenderService> _logger;
 
@@ -25,11 +25,21 @@ public partial class SenderService : ISenderService
         //return SentStatus.Test;
         var bookingCode = (int)source.Type;
         var client = _httpClientFactory.CreateClient();
-        var secret = await GetSecretAsync(CancellationToken.None);
+        string secret;
+        try
+        {
+            secret = await GetSecretAsync(CancellationToken.None);
+
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e.Message);
+            return SentStatus.CantGetSecret;
+        }
         var request = new HttpRequestMessage
         {
             Method = HttpMethod.Post,
-            RequestUri = new Uri(PostUrl),
+            RequestUri = PostUrl,
             Headers =
             {
                 { "Accept", "*/*" },
@@ -129,18 +139,23 @@ public partial class SenderService : ISenderService
     public async Task<string> GetSecretAsync(CancellationToken ct)
     {
         var client = _httpClientFactory.CreateClient();
-        client.Timeout = TimeSpan.FromMinutes(1);
-        
         var request = new HttpRequestMessage
         {
             Method = HttpMethod.Get,
-            RequestUri = new Uri(GetUrl),
+            RequestUri = GetUrl,
+            Headers =
+            {
+                { "Accept", "*/*" },
+                { "User-Agent", "Chrome/1.1.0" },
+                { "Connection", "keep-alive" },
+            },
         };
-        using var response = await client.SendAsync(request, ct);
+        using var response = client.Send(request, ct);
         var body = await response.Content.ReadAsStringAsync(ct);
         var regex = MyRegex();
         var match = regex.Matches(body).Single();
         var result = match.Value[match.Value.LastIndexOf('\'')..].Trim('\'');
+        _logger.LogInformation("today's secret is: {result}", result);
         return result;
     }
 
