@@ -7,7 +7,7 @@ on:
     
 jobs:
   deploy-to-github-pages:
-    runs-on: mcr.microsoft.com/dotnet/aspnet:9.0
+    runs-on: ubuntu-latest
     steps:
       # клонируем репозиторий на виртуальную машину
     - uses: actions/checkout@v2
