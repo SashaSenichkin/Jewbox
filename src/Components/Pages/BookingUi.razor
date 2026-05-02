@@ -1,15 +1,15 @@
-@page "/booking"
+@page "/"
 @rendermode InteractiveServer
 
 @using Jewbox.Models
 @using Jewbox.Repositories
 @using Jewbox.Services
-@using Microsoft.JSInterop
 
 @inject IUserRepository Users
 @inject IBookingService BookingService
-@inject ISender Sender
+@inject ISenderService SenderService
 @inject IJSRuntime JS
+
 
 <PageTitle>Booking</PageTitle>
 
@@ -18,12 +18,13 @@
     <label class="form-label">понедельник с 12:30 до 16:00, вторник с 14:00 до 16:00, среда с 8:00 до 12:00. </label>
     
     <InputDate class="form-control" @bind-Value="SelectedDate" />
-    <input class="form-control mt-2" type="time" @bind="SelectedTime" />
-
+    
+    <CustomTimeEdit class="mt-2" @bind-Value="SelectedTime" MinuteStep="15" />
+    
     @if (ShowDateWarning)
     {
         <div class="alert alert-warning mt-2 mb-0">
-            Вы выбрали некорректный день недели — проверьте доступные временные окна перед бронированием.
+            Вы выбрали некорректный день или время — проверьте доступные временные окна перед бронированием.
         </div>
     }
     
@@ -51,8 +52,8 @@
 </div>
 
 <div class="d-flex gap-2">
-    <button class="btn btn-primary" @onclick="ConfirmCreateBooking" disabled="@IsBusy">Забронировать срочный</button>
-    <button class="btn btn-primary" @onclick="SendBooking" disabled="@(!CanSend || IsBusy)">Забронировать несрочный, до 100</button>
+    <button class="btn btn-primary" @onclick="SendSrochno">Забронировать срочный</button>
+    <button class="btn btn-primary" @onclick="SendRegular">Забронировать несрочный, до 100</button>
 </div>
 
 @if (!string.IsNullOrWhiteSpace(Status))
@@ -60,28 +61,13 @@
     <div class="alert alert-info mt-3 mb-0">@Status</div>
 }
 
-@if (LastBooking is not null)
-{
-    <div class="card mt-3">
-        <div class="card-body">
-            <div><b>User:</b> @LastBooking.Person.Name</div>
-            <div><b>Org:</b> @LastBooking.Person.OrgName</div>
-            <div><b>Start:</b> @LastBooking.DesiredDate</div>
-            <div><b>End:</b> @LastBooking.EndDate</div>
-            <div><b>Type:</b> @LastBooking.Type</div>
-        </div>
-    </div>
-}
-
 @code {
     private IReadOnlyList<User> AllUsers { get; set; } = Array.Empty<User>();
     private DateTime? SelectedDateTime { get; set; } = DateTime.Today.AddHours(9);
     private int SelectedUserId { get; set; }
-    private Booking? LastBooking { get; set; }
     private string? Status { get; set; }
-    private bool IsBusy { get; set; }
+private TimeOnly _selectedTime = new TimeOnly(14, 30, 00); // 2:30 PM
 
-    private bool CanSend => SelectedDateTime is not null && AllUsers.Count > 0;
     private bool ShowDateWarning => !BookingService.IsCorrectDate(SelectedDateTime);
     private User? SelectedUser => AllUsers.FirstOrDefault(u => u.Id == SelectedUserId);
 
@@ -111,73 +97,77 @@
         SelectedUserId = AllUsers.FirstOrDefault()?.Id ?? 0;
     }
 
-    private void CreateBooking()
+    private void SendSrochno()
+    {
+        if (Validate().Result)
+        {
+            Send(BookingType.proizvoditeli_sro4no);
+        }
+    }
+    private void SendRegular()
+    {
+        if (Validate().Result)
+        {
+            Send(BookingType.proizvoditeli_do_100);
+        }
+    }
+    
+    private void Send(BookingType bookingType)
     {
         Status = null;
         if (SelectedDateTime is null)
         {
-            LastBooking = null;
             Status = "Select a date.";
             return;
         }
 
         var start = SelectedDateTime.Value;
-        LastBooking = BookingService.GetBooking(SelectedUserId, BookingType.proizvoditeli_sro4no, start);
-        Status = "Booking created (preview below).";
+        var booking = BookingService.GetBooking(SelectedUserId, bookingType, start);
+        try
+        {
+            var sentResult = SenderService.SendRequestAsync(booking).Result;
+            switch (sentResult)
+            {
+                case SentStatus.UnknownError:
+                    Status = "Что-то пошло не так";
+                    break;
+                case SentStatus.Success:
+                    Status = "Забронировано, проверьте почту";
+                    break;
+                case SentStatus.Test:
+                    Status = "Тестовое бронирование завершено, отправки не было";
+                    break;
+                case SentStatus.WrongDate:
+                    Status = "Дата не проходит. возможно наложение праздника или смена расписания";
+                    break;
+                case SentStatus.DayBusy:
+                    Status = "Дата уже занята";
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+        }
+        catch (Exception e)
+        {
+            Status = "ошибка отправки";
+            
+            Console.WriteLine(e);
+            throw;
+        }
     }
 
-    private async Task ConfirmCreateBooking()
+    private async Task<bool> Validate()
     {
-        if (IsBusy)
-        {
-            return;
-        }
-
-        var who = SelectedUser is null ? "не выбран пользователь" : $"{SelectedUser.Name} ({SelectedUser.NameCode})";
-        var when = SelectedDateTime is null ? "не выбрана дата/время" : SelectedDateTime.Value.ToString("dd.MM.yyyy HH:mm");
-        var ok = await JS.InvokeAsync<bool>("confirm", $"Создать срочную бронь?\n\nКто: {who}\nКогда: {when}");
-        if (!ok)
-        {
-            return;
-        }
-
-        CreateBooking();
-    }
-
-    private async Task SendBooking()
-    {
-        Status = null;
         if (SelectedDateTime is null)
         {
             Status = "Select a date.";
-            return;
+            return false;
         }
-
-        IsBusy = true;
-        try
-        {
-            if (LastBooking is null)
-            {
-                CreateBooking();
-            }
-
-            if (LastBooking is null)
-            {
-                Status = "Booking was not created.";
-                return;
-            }
-
-            var isError = await Sender.SendRequest(LastBooking);
-            Status = isError ? "Server returned error status." : "Request sent successfully.";
-        }
-        catch (Exception ex)
-        {
-            Status = ex.Message;
-        }
-        finally
-        {
-            IsBusy = false;
-        }
+        
+        var who = SelectedUser is null ? "не выбран пользователь" : $"{SelectedUser.Name} ({SelectedUser.NameCode})";
+        var when = SelectedDateTime is null ? "не выбрана дата/время" : SelectedDateTime.Value.ToString("dd.MM.yyyy HH:mm");
+        var ok = await JS.InvokeAsync<bool>("confirm", $"Создать срочную бронь?\n\nКто: {who}\nКогда: {when}");
+        return ok;
     }
 }
 

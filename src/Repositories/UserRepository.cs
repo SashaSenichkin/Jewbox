@@ -9,6 +9,16 @@ public class UserRepository : IUserRepository
         new ()
         {
             Id = 0,
+            OrgName = "FDDFSDT",
+            OrgCode = "HJKLJI",
+            NameCode = "SSDFCV",
+            Name = "QWE@#$",
+            Email = "probpalataalex@gmail.com",
+            Phone = "LKHL",
+        }, 
+        new ()
+        {
+            Id = 1,
             OrgName = "Индивидуальный предприниматель Литвинов Александр Геннадиевич",
             OrgCode = "ИП710100351300000",
             NameCode = "ЦМЛИ",
@@ -19,7 +29,7 @@ public class UserRepository : IUserRepository
         }, 
         new ()
         {
-            Id = 1,
+            Id = 2,
             OrgName = "ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ \"ЮВЕЛИРНАЯ МАСТЕРСКАЯ ЛИТВИНОВЫХ\"",
             OrgCode = "ЮЛ7101036266",
             NameCode = "Цмук",

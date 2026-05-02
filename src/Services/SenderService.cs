@@ -3,29 +3,26 @@ using Jewbox.Models;
 
 namespace Jewbox.Services;
 
-public partial class Sender : ISender
+public partial class SenderService : ISenderService
 {
     private const string GetUrl = "https://probpalata.gov.ru/deyatelnost/kleymenie-i-markirovka/grafik-raboty-otdelov-po-klejmeniyu-i-markirovke/g-moskva-zapis-na-klejmenie-partij-po-srochnomu-tarifu-proizvoditeli/";
     private const string PostUrl = "https://probpalata.gov.ru/wp-admin/admin-ajax.php";
     private readonly IHttpClientFactory _httpClientFactory;
-    
-    public Sender(IHttpClientFactory httpClientFactory)
+    private readonly ILogger<SenderService> _logger;
+
+    public SenderService(IHttpClientFactory httpClientFactory, ILogger<SenderService> logger)
     {
         _httpClientFactory = httpClientFactory;
+        _logger = logger;
     }
     
-    /// <summary>
-    /// echo generated
-    /// </summary>
-    /// <param name="source"></param>
-    /// <returns></returns>
-    public async Task<bool> SendRequest(Booking source)
+    public async Task<SentStatus> SendRequestAsync(Booking source)
     {
         //var clientHandler = new HttpClientHandler
         //{
         //    AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
         //};
-
+        //return SentStatus.Test;
         var bookingCode = (int)source.Type;
         var client = _httpClientFactory.CreateClient();
         var secret = await GetSecretAsync(CancellationToken.None);
@@ -90,12 +87,43 @@ public partial class Sender : ISender
                 { "calendar_request_params[active_locale]", "ru_RU" },
             }),
         };
-        
-        using var response = await client.SendAsync(request);
-        var body = await response.Content.ReadAsStringAsync();
+        try
+        {
+            using var response = await client.SendAsync(request);
+            var body = await response.Content.ReadAsStringAsync();
 
-        Console.WriteLine("response" + DateTime.Now + body);
-        return body?.Contains("\"status\":\"error\"") == true;
+            Console.WriteLine("response" + DateTime.Now + body);
+
+            if (string.IsNullOrWhiteSpace(body))
+            {
+                _logger.LogWarning("empty body {request}", request);
+                return SentStatus.UnknownError;
+            }
+            if (!body.Contains("\"status\":\"error\""))
+            {
+                return SentStatus.Success;
+            }
+            //TODO: find patterns
+            if (body.Contains("\"status\":\"error\""))
+            {
+                _logger.LogInformation("DayBusy {request}", request);
+                
+                return SentStatus.DayBusy;
+            }
+            if (body.Contains("\"status\":\"error\""))
+            {
+                _logger.LogInformation("WrongDate {request}", request);
+                return SentStatus.WrongDate;
+            }
+            
+            _logger.LogError("wtf is going on??? {request}, {body}", request, body);
+            return SentStatus.UnknownError;
+        }
+        catch (Exception e)
+        {
+            _logger.LogError("exception got {request}, {errorMsg}", request, e.Message);
+            return SentStatus.UnknownError;
+        }
     }
 
     public async Task<string> GetSecretAsync(CancellationToken ct)

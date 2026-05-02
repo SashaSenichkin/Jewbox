@@ -1,6 +1,7 @@
 using Jewbox.Components;
 using Jewbox.Repositories;
 using Jewbox.Services;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,10 +10,10 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 builder.Services.AddHttpClient();
-builder.Services.AddScoped<ISender, Sender>();
+builder.Services.AddScoped<ISenderService, SenderService>();
 builder.Services.AddScoped<IBookingService, BookingService>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
-
+builder.Logging.AddSerilog();
 
 var app = builder.Build();
 
@@ -25,7 +26,6 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
 
 app.UseAntiforgery();
 

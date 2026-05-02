@@ -42,7 +42,7 @@ public class Tests
         mockFactory.Setup(_ => _.CreateClient(It.IsAny<string>())).Returns(httpClient);
 
         _mocker.Use(mockFactory);
-        var sender = _mocker.Get<Sender>();
+        var sender = _mocker.Get<SenderService>();
         var result = sender.GetSecretAsync(CancellationToken.None).Result;
 
         Assert.That(result, Is.EqualTo("99483a3a70"));
