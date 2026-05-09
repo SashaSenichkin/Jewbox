@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
 
     <PropertyGroup>
         <TargetFramework>net9.0</TargetFramework>
@@ -6,18 +6,23 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <RootNamespace>Jewbox</RootNamespace>
         <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+        <DefaultItemExcludes>$(DefaultItemExcludes);Jewbox.Server\**;Jewbox.Shared\**</DefaultItemExcludes>
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Blazorise" Version="2.1.0" />
-      <PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />
-      <PackageReference Include="Serilog.Extensions.Hosting" Version="10.0.0" />
+        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="9.0.0"/>
+        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="9.0.0" PrivateAssets="all"/>
+        <PackageReference Include="Microsoft.Extensions.Http" Version="9.0.0"/>
     </ItemGroup>
 
     <ItemGroup>
-      <Content Include="..\.dockerignore">
-        <Link>.dockerignore</Link>
-      </Content>
+        <ProjectReference Include="Jewbox.Shared\Jewbox.Shared.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Content Include="..\.dockerignore">
+            <Link>.dockerignore</Link>
+        </Content>
     </ItemGroup>
 
 </Project>

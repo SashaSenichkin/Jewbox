@@ -22,7 +22,7 @@ jobs:
         
       # генерируем статические файлы
     - name: Publish .NET Core Project
-      run: dotnet publish src/Jewbox.csproj -c Release --output release --nologo
+      run: dotnet publish src/Jewbox.Server/Jewbox.Server.csproj -c Release --output release --nologo
       
     - name: Change base-tag in index.html from / to BlazorGitHubPagesDemo
       run: sed -i 's/<base href="\/" \/>/<base href="\/Jewbox\/" \/>/g' release/wwwroot/index.html  

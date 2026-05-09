@@ -22,7 +22,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\src\Jewbox.csproj" />
+      <ProjectReference Include="..\src\Jewbox.Server\Jewbox.Server.csproj" />
     </ItemGroup>
 
 </Project>

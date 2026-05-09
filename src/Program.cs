@@ -1,38 +1,21 @@
 using Jewbox.Components;
 using Jewbox.Repositories;
 using Jewbox.Services;
-using Serilog;
+using Microsoft.AspNetCore.Components.Web;
+using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 
-var builder = WebApplication.CreateBuilder(args);
+var builder = WebAssemblyHostBuilder.CreateDefault(args);
+builder.RootComponents.Add<App>("#app");
+builder.RootComponents.Add<HeadOutlet>("head::after");
 
-builder.WebHost.UseUrls("http://*:5000", "https://*:5001");
-
-// Add services to the container.
-builder.Services.AddRazorComponents()
-    .AddInteractiveServerComponents();
-
-builder.Services.AddHttpClient();
-builder.Services.AddScoped<ISenderService, SenderService>();
 builder.Services.AddScoped<IBookingService, BookingService>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
-builder.Logging.AddSerilog();
 
-var app = builder.Build();
+var apiBase = builder.Configuration["ApiBaseUrl"];
+var baseUri = string.IsNullOrWhiteSpace(apiBase)
+    ? new Uri(builder.HostEnvironment.BaseAddress)
+    : new Uri(apiBase.TrimEnd('/') + "/");
 
-// Configure the HTTP request pipeline.
-if (!app.Environment.IsDevelopment())
-{
-    app.UseExceptionHandler("/Error", createScopeForErrors: true);
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-    app.UseHsts();
-}
+builder.Services.AddHttpClient<ISenderService, ApiSenderService>(client => { client.BaseAddress = baseUri; });
 
-app.UseHttpsRedirection();
-
-app.UseAntiforgery();
-
-app.MapStaticAssets();
-app.MapRazorComponents<App>()
-    .AddInteractiveServerRenderMode();
-
-app.Run();
+await builder.Build().RunAsync();

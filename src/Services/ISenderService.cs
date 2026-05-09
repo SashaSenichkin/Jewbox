@@ -2,7 +2,7 @@ using Jewbox.Models;
 
 namespace Jewbox.Services;
 
-internal interface ISenderService
+public interface ISenderService
 {
     /// <summary>
     /// 
