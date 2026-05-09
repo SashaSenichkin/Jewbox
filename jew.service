@@ -1,0 +1,17 @@
+[Unit]
+Description=Jewbox
+StartLimitIntervalSec=60
+StartLimitBurst=3
+
+[Service]
+User=root
+WorkingDirectory=/app/Jewbox
+ExecStart=/app/Jewbox/src/bin/Debug/net9.0/Jewbox
+Restart=on-failure
+RestartSec=10s
+KillSignal=SIGINT
+SyslogIdentifier=jewbox
+Environment=ASPNETCORE_URLS=http://*:5000;https://*:5001
+
+[Install]
+WantedBy=default.target
