@@ -43,7 +43,7 @@ public class Tests
 
         _mocker.Use(mockFactory);
         var sender = _mocker.Get<SenderService>();
-        var result = sender.GetSecretAsync(CancellationToken.None).Result;
+        var result = sender.GetSecret(CancellationToken.None);
 
         Assert.That(result, Is.EqualTo("99483a3a70"));
     }

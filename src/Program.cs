@@ -16,6 +16,6 @@ var baseUri = string.IsNullOrWhiteSpace(apiBase)
     ? new Uri(builder.HostEnvironment.BaseAddress)
     : new Uri(apiBase.TrimEnd('/') + "/");
 
-builder.Services.AddHttpClient<ISenderService, ApiSenderService>(client => { client.BaseAddress = baseUri; });
+builder.Services.AddHttpClient<IApiSenderService, ApiApiSenderService>(client => { client.BaseAddress = baseUri; });
 
 await builder.Build().RunAsync();

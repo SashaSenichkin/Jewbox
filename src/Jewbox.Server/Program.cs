@@ -34,9 +34,9 @@ if (!app.Environment.IsDevelopment())
 app.UseBlazorFrameworkFiles();
 app.UseStaticFiles();
 
-app.MapPost("/api/booking/send", async (Booking booking, SenderService sender, CancellationToken ct) =>
+app.MapPost("/api/booking/send", (Booking booking, SenderService sender, CancellationToken ct) =>
 {
-    var status = await sender.SendRequestAsync(booking);
+    var status = sender.SendRequest(booking);
     return Results.Json(status);
 });
 

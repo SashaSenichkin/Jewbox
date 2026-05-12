@@ -16,7 +16,7 @@ public partial class SenderService
         _logger = logger;
     }
 
-    public async Task<SentStatus> SendRequestAsync(Booking source)
+    public SentStatus SendRequest(Booking source)
     {
         var endDate = source.EndDate ?? source.DesiredDate.AddMinutes(15);
         var bookingCode = (int)source.Type;
@@ -24,7 +24,7 @@ public partial class SenderService
         string secret;
         try
         {
-            secret = await GetSecretAsync(CancellationToken.None);
+            secret = GetSecret(CancellationToken.None);
         }
         catch (Exception e)
         {
@@ -89,8 +89,8 @@ public partial class SenderService
 
         try
         {
-            using var response = await client.SendAsync(request);
-            var body = await response.Content.ReadAsStringAsync();
+            using var response = client.Send(request);
+            var body = response.Content.ReadAsStringAsync().Result;
 
             Console.WriteLine("response" + DateTime.Now + body);
 
@@ -115,7 +115,7 @@ public partial class SenderService
         }
     }
 
-    public async Task<string> GetSecretAsync(CancellationToken ct)
+    public string GetSecret(CancellationToken ct)
     {
         var client = _httpClientFactory.CreateClient();
         var request = new HttpRequestMessage
@@ -129,8 +129,8 @@ public partial class SenderService
                 { "Connection", "keep-alive" },
             },
         };
-        using var response = await client.SendAsync(request, ct);
-        var body = await response.Content.ReadAsStringAsync(ct);
+        using var response = client.Send(request, ct);
+        var body = response.Content.ReadAsStringAsync(ct).Result;
         var regex = MyRegex();
         var match = regex.Matches(body).Single();
         var result = match.Value[match.Value.LastIndexOf('\'')..].Trim('\'');
