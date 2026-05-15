@@ -18,11 +18,6 @@ public partial class SenderService : ISenderService
     
     public async Task<SentStatus> SendRequestAsync(Booking source)
     {
-        //var clientHandler = new HttpClientHandler
-        //{
-        //    AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
-        //};
-        //return SentStatus.Test;
         var bookingCode = (int)source.Type;
         var client = _httpClientFactory.CreateClient();
         string secret;
