@@ -6,16 +6,23 @@ using Microsoft.AspNetCore.Mvc;
 namespace Jewbox.Controllers;
 
 [ApiController]
-[Route("api/v1/[controller]")]
+[Route("[controller]")]
 public class BookingController(
     ISenderService senderService,
     IBookingService bookingService,
     IUserRepository  userRepository)
-    : ControllerBase
+    : Controller
 {
-    [HttpPost]
+    public ActionResult Index()
+    {
+        return View(userRepository.GetUsers());
+    }
+    
+    [HttpPost("BookTime")]
     public async Task<IActionResult> BookTime(int personId, BookingType bookingType, DateTime time)
     {
+        Console.WriteLine("good");
+        return Ok();
         var booking = bookingService.GetBooking(personId, bookingType, time);
         var result = await senderService.SendRequestAsync(booking);
         if (result == SentStatus.Success)

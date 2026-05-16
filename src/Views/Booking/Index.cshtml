@@ -1,0 +1,23 @@
+﻿@model IReadOnlyList<Jewbox.Models.User>
+@{
+    Layout = null;
+}
+<html>
+<head>
+    <title>Запись на бронирование</title>
+</head>
+<body>
+@Html.React("CommentBox", new
+{
+    initialData = Model,
+    submitUrl = Url.Action("BookTime"),
+    pollInterval = 2000,
+})
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/16.13.0/umd/react.development.js"></script>
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/16.13.0/umd/react-dom.development.js"></script>
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/prop-types/15.6.0/prop-types.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/remarkable/1.7.1/remarkable.min.js"></script>
+<script src="@Url.Content("~/js/tutorial.jsx")"></script>
+@Html.ReactInitJavaScript()
+</body>
+</html>
