@@ -13,14 +13,17 @@
     }
     
     handleCommentSubmit = type => {
-        var data = 
-            {
-                personId : this.selectedUser.id,
-                bookingType: type
-            };
+        var data = JSON.stringify({
+            "personId": this.selectedUser.id,
+            "bookingType": type,
+            "time": "2026-05-21T14:17:53.385Z"
+        });
 
         var xhr = new XMLHttpRequest();
-        xhr.open('post', this.props.submitUrl, true);
+
+        xhr.open("POST", this.props.submitUrl);
+        xhr.setRequestHeader("Content-Type", "application/json");
+
         xhr.send(data);
     };
     

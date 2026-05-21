@@ -13,17 +13,18 @@ public class BookingController(
     IUserRepository  userRepository)
     : Controller
 {
+    [HttpGet]
     public ActionResult Index()
     {
         return View(userRepository.GetUsers());
     }
     
     [HttpPost("BookTime")]
-    public async Task<IActionResult> BookTime(int personId, BookingType bookingType, DateTime time)
+    public async Task<IActionResult> BookTime([FromBody] BookingRequest request)
     {
         Console.WriteLine("good");
         return Ok();
-        var booking = bookingService.GetBooking(personId, bookingType, time);
+        var booking = bookingService.GetBooking(request.personId, request.bookingType, request.time);
         var result = await senderService.SendRequestAsync(booking);
         if (result == SentStatus.Success)
         {
@@ -44,4 +45,11 @@ public class BookingController(
     {
         return Ok(userRepository.GetUsers());
     }
+}
+
+public class BookingRequest
+{
+    public int personId { get;set; }
+    public BookingType bookingType { get;set; }
+    public DateTime time { get;set; }
 }
