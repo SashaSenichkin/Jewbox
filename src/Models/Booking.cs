@@ -6,4 +6,7 @@ public class Booking
     public DateTime DesiredDate { get; init; }
     public DateTime? EndDate { get; set; }
     public required User Person { get; init; }
+    
+    public string? GiisNum { get; set; }
+    public string? GiisDate { get; set; }
 }

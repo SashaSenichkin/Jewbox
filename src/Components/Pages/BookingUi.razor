@@ -49,6 +49,12 @@
             </div>
         </div>
     }
+    
+    <label class="form-label">Номер в квитанции в ГИИС ДМДК (через запятую, если несколько)</label>
+    <InputText class="form-control" @bind-Value="GiisNum" />
+    
+    <label class="form-label">Дата квитанции в ГИИС ДМДК (через запятую, если несколько)</label>
+    <InputText class="form-control" @bind-Value="GiisDate" />
 </div>
 
 <div class="d-flex gap-2">
@@ -90,6 +96,9 @@
         }
     }
 
+    private string? GiisNum { get; set; }
+    private string? GiisDate { get; set; }
+
     protected override void OnInitialized()
     {
         AllUsers = Users.GetUsers();
@@ -122,6 +131,9 @@
 
         var start = SelectedDateTime.Value;
         var booking = BookingService.GetBooking(SelectedUserId, bookingType, start);
+        booking.GiisDate = GiisDate;
+        booking.GiisNum = GiisNum;
+        
         try
         {
             var sentResult = SenderService.SendRequestAsync(booking).Result;

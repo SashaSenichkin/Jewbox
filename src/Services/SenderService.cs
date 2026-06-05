@@ -80,6 +80,10 @@ public partial class SenderService : ISenderService
                     $"^spec_uchet_val{bookingCode}^{source.Person.OrgCode}~text" +
                     $"^imennik{bookingCode}^{source.Person.NameCode}~text" +
                     $"^imennik_val{bookingCode}^{source.Person.NameCode}~text" +
+                    $"^ticket{bookingCode}^{source.GiisNum}~text" +
+                    $"^ticket_val{bookingCode}^{source.GiisNum}~text" +
+                    $"^ticket_date{bookingCode}^{source.GiisDate}~text" +
+                    $"^ticket_date_val{bookingCode}^{source.GiisDate}~text" +
                     $"^name{bookingCode}^{source.Person.Name}~text" +
                     $"^name_val{bookingCode}^{source.Person.Name}~email" +
                     $"^email{bookingCode}^{source.Person.Email}~email" +
